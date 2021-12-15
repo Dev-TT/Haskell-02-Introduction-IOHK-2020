@@ -5,4 +5,4 @@ You are supposed to make edits to just that file.
 
 
 # Fork
-This has been forked from IOHK repo by Juan H
+This has been forked from IOHK repo by DevTT
