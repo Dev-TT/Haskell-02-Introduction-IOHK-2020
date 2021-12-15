@@ -329,11 +329,9 @@ propCommonPrefix5 =
 -- in the type of transactions.
 
 hasBlockProp :: (txs -> Bool) -> Chain txs -> Bool
-uniqueBlocks = error "TODO: implement hasBlockProp"
-
---hasBlockProp _ GenesisBlock = False
---hasBlockProp prop (Block c txs) = 
---  prop txs || hasBlockProp prop c
+hasBlockProp _ GenesisBlock = False
+hasBlockProp prop (Block c txs) = 
+  prop txs || hasBlockProp prop c
 
 
 propHasBlockProp1 :: Bool
@@ -347,8 +345,9 @@ propHasBlockProp2 = not (hasBlockProp odd chain2)
 -- Reimplement hasBlock in terms of hasBlockProp.
 
 hasBlock :: Eq txs => txs -> Chain txs -> Bool
-hasBlock _ GenesisBlock = False
-hasBlock block (Block c txs) = hasBlockProp (block) (Block c txs)
+hasBlock = error "TODO: implement uniqueBlocks"
+--hasBlock _ GenesisBlock = False
+--hasBlock block (Block c txs) = hasBlockProp (block) (Block c txs)
 
 propHasBlock1 :: Bool
 propHasBlock1 = hasBlock 8 chain4
