@@ -5,6 +5,7 @@ module Chains where
 -- manually reimplement some of the functions that would be given to you for
 -- free by having 'Foldable' derived.
 
+
 data Chain txs =
     GenesisBlock
   | Block (Chain txs) txs
