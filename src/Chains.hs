@@ -5,11 +5,11 @@ module Chains where
 -- manually reimplement some of the functions that would be given to you for
 -- free by having 'Foldable' derived.
 
-
 data Chain txs =
     GenesisBlock
   | Block (Chain txs) txs
   deriving (Show)
+
 
 eqChain :: Eq txs => Chain txs -> Chain txs -> Bool
 eqChain GenesisBlock    GenesisBlock    = True
@@ -42,6 +42,13 @@ chain3 = GenesisBlock |> 2 |> 8 |> 3
 chain4 :: Chain Int
 chain4 = GenesisBlock |> 2 |> 8 |> 4
 
+chain6JH :: Chain Int                         ---CUSTOM CHAIN
+chain6JH = GenesisBlock |> 2 |> 5 |> 4
+
+chain7JH :: Chain Int                         ---CUSTOM CHAIN
+chain7JH = GenesisBlock |> 2 |> 5 |> 6 |> 8 |> 12
+
+
 -- All four chains in a list
 chains :: [Chain Int]
 chains = [chain1, chain2, chain3, chain4]
@@ -51,7 +58,9 @@ chains = [chain1, chain2, chain3, chain4]
 -- Compute the length of a 'Chain'.
 
 lengthChain :: Chain txs -> Int
-lengthChain = error "TODO: implement lengthChain"
+lengthChain GenesisBlock = 0
+lengthChain (Block c _) = lengthChain c + 1
+
 
 propLengthChain1 :: Bool
 propLengthChain1 = lengthChain chain1 == 1
@@ -75,7 +84,8 @@ propLengthChain5 =
 -- Sum all entries in an integer chain.
 
 sumChain :: Chain Int -> Int
-sumChain = error "TODO: implement sumChain"
+sumChain GenesisBlock = 0
+sumChain (Block c txs) = sumChain c + txs
 
 propSumChain1 :: Bool
 propSumChain1 = sumChain chain1 == 2
@@ -102,7 +112,8 @@ propSumChain5 =
 -- of an empty chain is 0.
 
 maxChain :: Chain Int -> Int
-maxChain = error "TODO: implement maxChain"
+maxChain GenesisBlock = 0
+maxChain (Block c txs) = max (maxChain c) txs
 
 propMaxChain :: Bool
 propMaxChain =
@@ -115,7 +126,21 @@ propMaxChain =
 -- the first.
 
 longerChain :: Chain txs -> Chain txs -> Chain txs
-longerChain = error "TODO: implement longerChain"
+longerChain c1 c2 = (if lengthChain c1 >= lengthChain c2 then c1 else c2) 
+  --longerChain c1 c2 = longerC where
+  --  if lengthChain c1 >= lengthChain c2 then 
+  --    longerC = c1
+  --  else
+  --    longerC = c2
+
+  -- ALSO PENDING TRYING THIS WAY OUT:
+  -- demo :: (RealFloat a) => a -> a -> String
+  -- demo w h
+  -- | w / h ^ 2 <= 18.5 = "some msg"
+  -- | w / h ^ 2 <= 25.0 = "some msg 2"
+  -- | w / h ^ 2 <= 30.0 = "some msg 3"
+  -- | otherwise = "success part "
+
 
 propLongerChain1 :: Bool
 propLongerChain1 = longerChain chain1 chain2 == chain2
@@ -136,15 +161,29 @@ propLongerChain5 = and [ propLongerChain1
                        , propLengthChain4
                        ]
 
+prevNumber :: Chain Int -> Int
+-- gives the prev number
+prevNumber GenesisBlock = 0
+prevNumber (Block _ i ) = i 
+
 -- Task Chains-5.
 --
 -- Let's call an integer chain "valid" if from the genesis
 -- block, each transaction has a higher number than all
 -- preceding transactions. (You may assume that all integers
 -- are positive.) Check that a given chain is valid.
-
+                                                          -- CHECK chain6JH
 validChain :: Chain Int -> Bool
-validChain = error "TODO: implement validChain"
+validChain GenesisBlock = True
+validChain (Block c i ) = if (prevNumber c)>i then False else validChain c
+
+--validChain (Block c i) = 2
+
+propValidChain6 :: Bool
+propValidChain6 = validChain chain6JH
+
+propValidChain7 :: Bool
+propValidChain7 = validChain chain7JH
 
 propValidChain1 :: Bool
 propValidChain1 = validChain GenesisBlock
@@ -166,7 +205,19 @@ propValidChain2 =
 -- to task 9.
 
 isPrefixOf :: Eq txs => Chain txs -> Chain txs -> Bool
-isPrefixOf = error "TODO: implement isPrefixOf"
+isPrefixOf GenesisBlock GenesisBlock = True
+isPrefixOf (Block _ _) GenesisBlock = False
+isPrefixOf GenesisBlock (Block _ _) = True
+isPrefixOf (Block c1 txs1) (Block c2 txs2) = 
+  if eqChain (Block c1 txs1) (Block c2 txs2) then
+    True
+  else
+    if lengthChain (Block c1 txs1) > lengthChain c2 then
+      False
+    else if lengthChain (Block c1 txs1) <= lengthChain c2 then
+      isPrefixOf (Block c1 txs1) c2
+    else
+      False
 
 propIsPrefixOf1 :: Bool
 propIsPrefixOf1 = isPrefixOf chain1 chain2
@@ -199,7 +250,13 @@ propIsPrefixOf6 = and [ propIsPrefixOf1
 -- other.
 
 areCompatible :: Eq txs => Chain txs -> Chain txs -> Bool
-areCompatible = error "TODO: implement areCompatible"
+areCompatible GenesisBlock GenesisBlock = True
+areCompatible (Block _ _) GenesisBlock = True
+areCompatible GenesisBlock (Block _ _) = True
+areCompatible (Block c1 txs1) (Block c2 txs2) = 
+  (isPrefixOf (Block c1 txs1) (Block c2 txs2) ) || (isPrefixOf (Block c2 txs2) (Block c1 txs1) )
+
+
 
 propAreCompatible1 :: Bool
 propAreCompatible1 = areCompatible chain1 chain2
@@ -235,9 +292,19 @@ propAreCompatible7 = and [ propAreCompatible1
 -- Task Chains-8.
 --
 -- Given two chains, find the longest common prefix.
-
 commonPrefix :: Eq txs => Chain txs -> Chain txs -> Chain txs
-commonPrefix = error "TODO: implement commonPrefix"
+commonPrefix GenesisBlock GenesisBlock = GenesisBlock
+commonPrefix (Block _ _) GenesisBlock = GenesisBlock
+commonPrefix GenesisBlock (Block _ _) = GenesisBlock
+commonPrefix (Block c1 txs1) (Block c2 txs2) = 
+  if eqChain (Block c1 txs1) (Block c2 txs2) then (Block c1 txs1)
+  else if lengthChain (Block c1 txs1) == lengthChain (Block c2 txs2) then
+    commonPrefix c1 c2
+  else if lengthChain (Block c1 txs1) > lengthChain (Block c2 txs2) then
+    commonPrefix c1 (Block c2 txs2)
+  else 
+    commonPrefix (Block c1 txs1) c2
+
 
 propCommonPrefix1 :: Bool
 propCommonPrefix1 = commonPrefix chain1 chain2 == chain1
@@ -262,7 +329,12 @@ propCommonPrefix5 =
 -- in the type of transactions.
 
 hasBlockProp :: (txs -> Bool) -> Chain txs -> Bool
-hasBlockProp = error "TODO: implement hasBlockProp"
+uniqueBlocks = error "TODO: implement hasBlockProp"
+
+--hasBlockProp _ GenesisBlock = False
+--hasBlockProp prop (Block c txs) = 
+--  prop txs || hasBlockProp prop c
+
 
 propHasBlockProp1 :: Bool
 propHasBlockProp1 = hasBlockProp even chain3
@@ -275,7 +347,8 @@ propHasBlockProp2 = not (hasBlockProp odd chain2)
 -- Reimplement hasBlock in terms of hasBlockProp.
 
 hasBlock :: Eq txs => txs -> Chain txs -> Bool
-hasBlock = error "TODO: implement hasBlock"
+hasBlock _ GenesisBlock = False
+hasBlock block (Block c txs) = hasBlockProp (block) (Block c txs)
 
 propHasBlock1 :: Bool
 propHasBlock1 = hasBlock 8 chain4
