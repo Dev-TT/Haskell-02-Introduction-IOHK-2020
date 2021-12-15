@@ -345,9 +345,8 @@ propHasBlockProp2 = not (hasBlockProp odd chain2)
 -- Reimplement hasBlock in terms of hasBlockProp.
 
 hasBlock :: Eq txs => txs -> Chain txs -> Bool
-hasBlock = error "TODO: implement uniqueBlocks"
---hasBlock _ GenesisBlock = False
---hasBlock block (Block c txs) = hasBlockProp (block) (Block c txs)
+hasBlock _ GenesisBlock = False
+hasBlock block (Block c txs) = (block == txs) || hasBlock block c
 
 propHasBlock1 :: Bool
 propHasBlock1 = hasBlock 8 chain4
@@ -361,7 +360,9 @@ propHasBlock2 = not (hasBlock 8 chain5)
 -- i.e., different from each other.
 
 uniqueBlocks :: Eq txs => Chain txs -> Bool
-uniqueBlocks = error "TODO: implement uniqueBlocks"
+uniqueBlocks GenesisBlock = True
+uniqueBlocks (Block c txs) = not (hasBlock txs c)
+
 
 propUniqueBlocks1 :: Bool
 propUniqueBlocks1 = uniqueBlocks (GenesisBlock :: Chain Int)
