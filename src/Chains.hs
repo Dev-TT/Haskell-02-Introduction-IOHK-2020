@@ -427,7 +427,7 @@ propUniqueBlocks3 = uniqueBlocks chain6
 propUniqueBlocks4 :: Bool
 propUniqueBlocks4 = not (uniqueBlocks (Block chain2 2))
 
--- Task Chains-12.
+-- Task Chains-12 .
 --
 -- Check whether all blocks in the given chain have
 -- a particular property.
