@@ -1,4 +1,55 @@
 module Chains where
+--Lambda functions with key/value
+--Class 2, minute 2:44:00
+
+--TESTS
+
+fromMaybe :: a -> Maybe a -> a
+fromMaybe def Nothing = def
+fromMaybe _ (Just a) = a
+-- fromMaybe 2 (Just 4)
+
+type Table k v = [(k, v)]
+
+empty :: Table k v
+empty = []
+-- example
+-- a=empty
+
+insert :: k -> v -> Table k v -> Table k v
+insert k v t = (k, v) : t
+-- example
+-- insert 1 2 empty
+
+--delete :: Eq k => k -> Table k v -> Table k v
+-- FIRST VERSION
+{-
+delete k ((k', v) : t)
+| k == k' = delete k t
+| otherwise = (k', v) : delete k t
+-}
+
+-- NEXT VERSIONS
+--delete k kvs = filter _ kvs   --returns: hole is a function from "Table k v" (pair) to bool
+--delete k kvs = filter (\(k', _) -> not (k==k')) kvs  -- (pattern matching, in the lambda we have a pair)
+--delete k kvs = filter (\kv -> not (k == fst kv)) kvs -- (in the lambda we have a pair ALSO, called kv). 
+-- inequality is written with /= operator
+--delete k kvs = filter (\kv -> k /= fst kv) kvs  -- (in the lambda we have a pair ALSO, called kv). 
+                                                  --fst returns the first argument, k
+
+-- above, note that you got kvs in left and right
+-- removing kvs both sides is a Reduction
+delete :: Eq k => k -> (Table k v -> Table k v)     --it is the same as before because the arrow is right associative, but helps think differently
+                                                    -- as a function that takes a value and returns a function that take 
+delete k = filter (\kv -> k /= fst kv) -- (in the lambda we have a pair ALSO, called kv). 
+ 
+
+-- example
+-- delete 7 (insert 7 "Germany" (insert 7 "Mongolia" (insert 42 "haskell" empty)))
+
+
+--END TESTS JH
+
 
 -- This is the definition of chains from the slides. We omit 'Foldable' from
 -- the derived classes, because some of the tasks are intended to let you
@@ -382,7 +433,9 @@ propUniqueBlocks4 = not (uniqueBlocks (Block chain2 2))
 -- a particular property.
 
 allBlockProp :: (txs -> Bool) -> Chain txs -> Bool
-allBlockProp = error "TODO: implement allBlockProp"
+allBlockProp _ GenesisBlock = True
+allBlockProp prop (Block c txs) = (prop txs) && hasBlockProp prop c
+
 
 propAllBlockProp1 :: Bool
 propAllBlockProp1 = allBlockProp (== 'x') GenesisBlock
@@ -399,7 +452,12 @@ propAllBlockProp3 = not (allBlockProp even chain3)
 -- If the given list is empty, return 0.
 
 maxChains :: [Chain txs] -> Int
-maxChains = error "TODO: implement maxChains"
+--maxChains = error "TODO: implement maxChains"
+maxChains list = 
+  if null list then 0 
+  else 
+    maximum (map lengthChain list)
+
 
 propMaxChains1 :: Bool
 propMaxChains1 = maxChains [] == 0
@@ -415,6 +473,8 @@ propMaxChains2 = maxChains [chain1, chain2, chain3] == 3
 
 longestCommonPrefix :: Eq txs => Chain txs -> [Chain txs] -> Chain txs
 longestCommonPrefix = error "TODO: implement longestCommonPrefix"
+--longestCommonPrefix sampleChain list = maximum (map lengthChain (map (commonPrefix sampleChain) list))
+
 
 propLongestCommonPrefix1 :: Bool
 propLongestCommonPrefix1 = longestCommonPrefix chain4 [] == chain4
@@ -436,7 +496,8 @@ propLongestCommonPrefix3 = longestCommonPrefix chain6 [chain5, chain5] == chain5
 -- the original chain at that point.
 
 balancesChain :: Chain Int -> Chain Int
-balancesChain = error "TODO: implement balancedChain"
+balancesChain GenesisBlock = GenesisBlock
+balancesChain (Block c txs) = balancesChain c |> sumChain (Block c txs)
 
 propBalancesChain1 :: Bool
 propBalancesChain1 =
@@ -484,7 +545,9 @@ propBalancesChain7 = and [ propBalancesChain1
 -- intermediate balances are negative.
 
 validBalancesChain :: Chain Int -> Bool
-validBalancesChain = error "TODO: implement validBalancesChain"
+validBalancesChain GenesisBlock = True
+validBalancesChain (Block c txs) = validBalancesChain c && sumChain (Block c txs)>=0
+
 
 propValidBalancesChain1 :: Bool
 propValidBalancesChain1 =
@@ -506,7 +569,14 @@ propValidBalancesChain3 = and [ propValidBalancesChain1
 -- Return the rest.
 
 shortenWhile :: (txs -> Bool) -> Chain txs -> Chain txs
-shortenWhile = error "TODO: implement shortenWhile"
+shortenWhile _ GenesisBlock = GenesisBlock
+shortenWhile prop (Block c txs) = 
+  if prop txs then 
+    shortenWhile prop c
+  else
+    shortenWhile prop c  |> txs
+--balancesChain GenesisBlock = GenesisBlock
+--balancesChain (Block c txs) = balancesChain c |> sumChain (Block c txs)
 
 propShortenWhile1 :: Bool
 propShortenWhile1 = shortenWhile even chain2 == GenesisBlock
@@ -519,7 +589,11 @@ propShortenWhile2 = shortenWhile (> 3) chain2 == chain1
 -- Reimplement the function 'build' from the slides.
 
 build :: Int -> Chain Int
-build = error "TODO: implement build"
+build n =
+  if n<=0 then
+    GenesisBlock
+  else 
+    Block (build (n-1)) n
 
 propBuild1 :: Bool
 propBuild1 = lengthChain (build 1000) == 1000
@@ -539,7 +613,12 @@ propBuild3 = build 3 == GenesisBlock |> 1 |> 2 |> 3
 -- genesis block.
 
 replicateChain :: Int -> txs -> Chain txs
-replicateChain = error "TODO: implement replicateChain"
+--replicateChain = error "TODO: implement replicateChain"
+replicateChain q txs = 
+  if q<=0 then GenesisBlock
+  else
+    Block (replicateChain (q-1) txs) txs
+
 
 propReplicateChain1 :: Bool
 propReplicateChain1 = replicateChain (-7) 'x' == GenesisBlock
