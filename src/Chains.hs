@@ -68,7 +68,7 @@ eqChain (Block c1 txs1) (Block c2 txs2) = eqChain c1 c2 && txs1 == txs2
 eqChain _               _               = False
 
 instance Eq txs => Eq (Chain txs) where
-  (==) = eqChain
+  (==) = eqChain  
 
 -- More convenient infix operator to build chains, as shown on the slides.
 -- Note that you cannot use this operator in patterns (there is a language
@@ -215,7 +215,7 @@ propLongerChain5 = and [ propLongerChain1
 prevNumber :: Chain Int -> Int
 -- gives the prev number
 prevNumber GenesisBlock = 0
-prevNumber (Block _ i ) = i 
+prevNumber (Block _ p ) = p 
 
 -- Task Chains-5.
 --
@@ -264,7 +264,7 @@ isPrefixOf (Block c1 txs1) (Block c2 txs2) =
     True
   else
     if lengthChain (Block c1 txs1) > lengthChain c2 then
-      False
+      False       --confirmed
     else if lengthChain (Block c1 txs1) <= lengthChain c2 then
       isPrefixOf (Block c1 txs1) c2
     else
@@ -465,15 +465,19 @@ propMaxChains1 = maxChains [] == 0
 propMaxChains2 :: Bool
 propMaxChains2 = maxChains [chain1, chain2, chain3] == 3
 
--- Task Chains-14.
+-- Task Chains-14.          (THIS WAS TOUGH FOR ME, and I needed help from the solutions)
 --
 -- Given a non-empty list of chains, determine the longest
--- common prefix. We model a non-empty list here as a single
+-- common prefix. We model a non-empty list here as a single   
 -- element plus a normal list.
 
+-- JH:
+-- "single element" = elem1
+-- "normal list" = [] = (elem2: rest)
+
 longestCommonPrefix :: Eq txs => Chain txs -> [Chain txs] -> Chain txs
-longestCommonPrefix = error "TODO: implement longestCommonPrefix"
---longestCommonPrefix sampleChain list = maximum (map lengthChain (map (commonPrefix sampleChain) list))
+longestCommonPrefix elem1 [] = elem1
+longestCommonPrefix elem1 (elem2: rest) = commonPrefix elem1 (longestCommonPrefix elem2 rest) 
 
 
 propLongestCommonPrefix1 :: Bool
@@ -613,7 +617,6 @@ propBuild3 = build 3 == GenesisBlock |> 1 |> 2 |> 3
 -- genesis block.
 
 replicateChain :: Int -> txs -> Chain txs
---replicateChain = error "TODO: implement replicateChain"
 replicateChain q txs = 
   if q<=0 then GenesisBlock
   else
@@ -637,7 +640,14 @@ propReplicateChain3 = replicateChain 3 'x' == GenesisBlock |> 'x' |> 'x' |> 'x'
 -- return the genesis block only.
 
 cutPrefix :: Int -> Chain txs -> Chain txs
-cutPrefix = error "TODO: implement cutPrefix"
+--cutPrefix = error "TODO: implement cutPrefix"
+cutPrefix _ GenesisBlock = GenesisBlock
+cutPrefix q (Block c txs) = 
+  if q>= lengthChain (Block c txs) then
+    (Block c txs)
+  else
+    cutPrefix q c
+
 
 propCutPrefix1 :: Bool
 propCutPrefix1 = cutPrefix 1 chain2 == chain1
