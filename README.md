@@ -1,4 +1,4 @@
-#Homework completion
+# Homework completion
 The following instructions where now completed
 
 # First set of exercises
